@@ -5,7 +5,7 @@ import CacheDirective from './cacheDirective';
 export function ApolloServerConfigWrapper(config: any) {
     // Declare new cache directive
     const cacheDef = gql(`
-        directive @cache(ttl: Int, cacheKey: [String!], pullingTimeout: Int, pingInterval: Int) on FIELD_DEFINITION
+        directive @cache(ttl: Int, cacheKey: [String!], pollingTimeout: Int, pingInterval: Int) on FIELD_DEFINITION
     `);
 
     // Add new cache directive declaration to the schema

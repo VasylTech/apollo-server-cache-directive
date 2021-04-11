@@ -6,14 +6,16 @@
   <ol>
     <li>
       <a href="#motivation">Motivation</a>
+    </li>
+    <li>
       <a href="#objectives">Objectives</a>
     </li>
     <li>
       <a href="#installation">Installation</a>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#understanding-cachekey-argument">Understanding cacheKey Argument</a></li>
     <li><a href="#directive-arguments">Directive Arguments</a></li>
+    <li><a href="#understanding-cachekey-argument">Understanding cacheKey Argument</a></li>
     <li><a href="#sample-project">Sample Project</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
@@ -85,14 +87,31 @@ const server = new ApolloServer(ApolloServerConfigWrapper({
 
 As you've noticed, in the example above I'm using distributed Redis cache instance.
 
+
+<!-- DIRECTIVE ARGUMENTS -->
+## Directive Arguments
+
+Directive definition:
+```graphql
+directive @cache(ttl: Int, cacheKey: [String!], pollingTimeout: Int, pingInterval: Int) on FIELD_DEFINITION
+```
+
+| Argument | Description |
+| --- | --- |
+| ttl | `Number`: Number of seconds the fields should be cached for. Default is `900` seconds. |
+| pingInterval | `Number`: When other resolver is already fetching requested data, then how frequent (in milliseconds) the current resolver should check if the first resolver already finished execution. Default is `1000` milliseconds. |
+| cacheKey | `String` or `[String]`: One or more attributes that define unique cached key. Check <a href="#understanding-cachekey-argument">Understanding cacheKey Argument</a> section for more info. Default is `["parent", "args", "vars"]`. |
+| pollingTimeout | `Number`: Number of seconds the resolve is allowed to try to fetch the data before returning `null` value. Default is `30` seconds. |
+
+<!-- UNDERSTANDING CACHEKEY ARGUMENT -->
 ## Understanding cacheKey Argument
 
 **cacheKey** argument syntax:
-`parent.<field-name>`
-`args.<argument-name>`
-`vars.<variable-name>`
+ - `parent.<field-name>`
+ - `args.<argument-name>`
+ - `vars.<variable-name>`
 
-It is not a trivial task to determine what particular cache key contains the cached field's value. So, by default, we assume that the uniqueness of data that is fetched can be defined by some field's value, arguments, query variable(s), or any combination of them.
+It is not a trivial task to determine what particular cache key contains the cached field's value. However, we can assume that the uniqueness of data that is fetched can be defined by some field's value, arguments, query variable(s), or any combination of them.
 
 Each resolver can optionally accept [four positional arguments](https://www.apollographql.com/docs/apollo-server/data/resolvers/#resolver-arguments) `(parent, args, context, info)` that contain enough information for us to define a cache key.
 
@@ -100,8 +119,8 @@ For example in the GraphQL query below, the `books` field will be cached for eac
 
 ```graphql
 query GetLibraryBooks {
-	library(id: "1000000120") {
-		id
+  library(id: "1000000120") {
+    id
 		books {
 			title
 			author
@@ -111,38 +130,26 @@ query GetLibraryBooks {
 ```
 
 Below is the schema that supports the query above.
-type Query {
-    library(id: ID!): Library
-}
+
 ```graphql
-type Library {
-    id: ID!,
-    books(type: String): [Book] @cache(ttl: 300, cacheKey: "parent.id")
+type Query {
+  library(id: ID!): Library
 }
+
+type Library {
+  id: ID!,
+  books(type: String): [Book] @cache(ttl: 300, cacheKey: "parent.id")
+}
+
 type Book {
     title: String
     author: String
 }
 ```
+
 The `parent` argument that is passed to the resolver, already contains the `Library` object type with populated `id` property.
 
-Similar way, we can define how to define a unique cache key based on passing query [arguments](https://graphql.org/learn/queries/#fields) or [variables](https://graphql.org/learn/queries/#fields).
-
-
-<!-- DIRECTIVE ARGUMENTS -->
-## Directive Arguments
-
-Directive definition:
-```graphql
-directive @cache(ttl: Int = 300, cacheKey: [String!] = "parent", pullingTimeout: Int = 30, pingInterval: Int = 1000) on FIELD_DEFINITION
-```
-
-| Argument | Description |
-| --- | --- |
-| ttl | `Number`: Number of seconds the fields should be cached for. Default is `900`. |
-| pingInterval | `Number`: If other resolver already fetching requested information, then how frequent (in milliseconds) we should check when the first resolver is finished. Default is `1000` milliseconds. |
-| cacheKey | `String` or `[String]`: One or more attributes that define unique cached key. Check <a href="#understanding-cachekey-argument">Understanding cacheKey Argument</a> section for more info. Default is `["parent", "args", "vars"]`. |
-| pullingTimeout | `Number`: Number of seconds we give to resolve cachable field. Default is `30` seconds. |
+Similar way, we can declare how to define a unique cache key based on passing query [arguments](https://graphql.org/learn/queries/#fields) or [variables](https://graphql.org/learn/queries/#fields).
 
 
 <!-- SAMPLE PROJECT -->

@@ -104,7 +104,7 @@ class CacheDirective extends SchemaDirectiveVisitor {
 
                 if (!c) {
                     const timeout = CacheDirective.getDirectiveArgumentByName(
-                        directive, 'pullingTimeout', 900
+                        directive, 'pollingTimeout', 900
                     );
                     const ttl = CacheDirective.getDirectiveArgumentByName(
                         directive, 'ttl', 900
