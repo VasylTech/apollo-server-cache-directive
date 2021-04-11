@@ -148,8 +148,25 @@ directive @cache(ttl: Int = 300, cacheKey: [String!] = "parent", pullingTimeout:
 <!-- SAMPLE PROJECT -->
 ## Sample Project
 
+There is a sample project included in this repository in the `/sample` folder. To run the project, follow these steps:
 
+1. `npm install & node .`
 
+2. Send GraphQL query request to the `http://localhost:4000/graphql` endpoint:
+```graphql
+query GetLibrary {
+    library(id: "12345") {
+        id
+        books {
+            title
+        }
+    }
+}
+```
+
+The `books` resolver is throttled on purpose to show that any parallel requests that ask for the same library details, will wait until the first resolver finish execution.
+
+You can open the Redis [Medis](https://github.com/luin/medis) to observe the behavior of the cache key.
 
 <!-- ROADMAP -->
 ## Roadmap
@@ -172,7 +189,7 @@ Contributions are what make the open source community such an amazing place to b
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the Apache License 2.0. See `LICENSE` for more information.
 
 
 <!-- CONTACT -->
