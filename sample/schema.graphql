@@ -1,0 +1,52 @@
+"""
+All available queries
+"""
+type Query {
+
+    """
+    Get the library by its ID
+    """
+    library(id: ID!): Library
+
+}
+
+"""
+The library type
+"""
+type Library {
+
+    """
+    Library unique ID
+    """
+    id: ID!,
+
+    """
+    Collection of books that belong to this library
+
+    The collection can be filtered by the type of books
+    """
+    books(type: String): [Book] @cache(ttl: 300)
+
+}
+
+"""
+The book type
+"""
+type Book {
+
+    """
+    Book's unique ID
+    """
+    id: ID!
+
+    """
+    Book's title
+    """
+    title: String
+
+    """
+    Book's author
+    """
+    author: String
+
+}
