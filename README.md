@@ -178,7 +178,7 @@ You can open the Redis [Medis](https://github.com/luin/medis) to observe the beh
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a list of proposed features (and known issues).
+See the [open issues](https://github.com/VasylTech/apollo-server-cache-directive/issues) for a list of proposed features (and known issues).
 
 
 <!-- CONTRIBUTING -->

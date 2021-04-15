@@ -2,6 +2,7 @@ import * as crypto from 'crypto';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { defaultFieldResolver } from 'graphql';
 import { KeyValueCache } from 'apollo-server-caching';
+import { GraphQLResolveInfo } from 'graphql';
 
 class CacheDirective extends SchemaDirectiveVisitor {
 
@@ -28,7 +29,7 @@ class CacheDirective extends SchemaDirectiveVisitor {
         return result;
     }
 
-    static getCacheDirective(field: any) {
+    static getCacheDirective(field: { astNode: { directives: Array<any> } }) {
         return field.astNode.directives.filter(
             (d: any) => d.kind === 'Directive' && d.name.value === 'cache'
         ).shift();
@@ -42,7 +43,7 @@ class CacheDirective extends SchemaDirectiveVisitor {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    async readFromCache(directive: any, key: string): any {
+    async readFromCache(directive: any, key: string): Promise<any> {
         let result;
 
         let c = await CacheDirective.cache.get(key);
@@ -90,7 +91,7 @@ class CacheDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition(field: any) {
         const { resolve = defaultFieldResolver } = field;
 
-        field.resolve = async (parent: any, args: any, context: any, info: any) => {
+        field.resolve = async (parent: any, args: any, context: any, info: GraphQLResolveInfo) => {
             let result;
 
             if (CacheDirective.hasCacheDirective(field)) {

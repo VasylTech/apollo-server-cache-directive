@@ -1,17 +1,14 @@
 {
   "name": "apollo-server-cache-directive",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Apollo server @cache directive",
+  "repository": "github:VasylTech/apollo-server-cache-directive",
   "main": "dist/index.js",
   "scripts": {
     "test": "jest --config jestconfig.json",
     "build": "tsc",
     "lint": "tslint -p tsconfig.json",
-    "prepare" : "npm run build",
-    "prepublishOnly" : "npm test && npm run lint",
-    "preversion" : "npm run lint",
-    "version" : "npm run format && git add -A src",
-    "postversion" : "git push && git push --tags"
+    "prepare" : "npm run build"
   },
   "keywords": [
     "apollo-server",
