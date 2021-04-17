@@ -20,7 +20,7 @@ const resolvers = {
     Library: {
         books: () => {
             return new Promise(resolve => {
-                setTimeout(() => resolve(Db), 5000);
+                setTimeout(() => resolve(Db), 10000);
             });
         }
     }

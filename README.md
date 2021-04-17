@@ -16,6 +16,7 @@
     <li><a href="#usage">Usage</a></li>
     <li><a href="#directive-arguments">Directive Arguments</a></li>
     <li><a href="#understanding-cachekey-argument">Understanding cacheKey Argument</a></li>
+    <li><a href="#cache-types">Cache Types</a></li>
     <li><a href="#sample-project">Sample Project</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
@@ -42,8 +43,8 @@ Ability to cache any field value either in memory or in distributed cache storag
 
 ```graphql
 type Library {
-    id: ID!,
-    books(type: String): [Book] @cache(ttl: 300)
+  id: ID!,
+  books(type: String): [Book] @cache(ttl: 300)
 }
 ```
 
@@ -77,11 +78,11 @@ const { ApolloServerConfigWrapper } = require('apollo-server-cache-directive');
 //...
 
 const server = new ApolloServer(ApolloServerConfigWrapper({
-    typeDefs,
-    resolvers,
-    cache: new RedisCache({
-        host: 'localhost',
-    })
+  typeDefs,
+  resolvers,
+  cache: new RedisCache({
+    host: 'localhost'
+  })
 }));
 ```
 
@@ -93,15 +94,16 @@ As you've noticed, in the example above I'm using distributed Redis cache instan
 
 Directive definition:
 ```graphql
-directive @cache(ttl: Int, cacheKey: [String!], pollingTimeout: Int, pingInterval: Int) on FIELD_DEFINITION
+directive @cache(ttl: Int, cacheKey: String, type: CacheType, pollingTimeout: Int, pingInterval: Int) on FIELD_DEFINITION
 ```
 
 | Argument | Description |
 | --- | --- |
 | ttl | `Number`: Number of seconds the fields should be cached for. Default is `900` seconds. |
-| pingInterval | `Number`: When other resolver is already fetching requested data, then how frequent (in milliseconds) the current resolver should check if the first resolver already finished execution. Default is `1000` milliseconds. |
-| cacheKey | `String` or `[String]`: One or more attributes that define unique cached key. Check <a href="#understanding-cachekey-argument">Understanding cacheKey Argument</a> section for more info. Default is `["parent", "args", "vars"]`. |
+| cacheKey | `String`: Comma-separated list of of attributes that define unique cached key. Check <a href="#understanding-cachekey-argument">Understanding cacheKey Argument</a> section for more info. Default is `parent,args,vars`. |
+| type | `CacheType`: How the cache is resolved. The allowed values are `SHARED` and `SCOPED`. For more information, refer to the <a href="#cache-types">Cache types</a> section. Default is `SHARED`. |
 | pollingTimeout | `Number`: Number of seconds the resolve is allowed to try to fetch the data before returning `null` value. Default is `30` seconds. |
+| pingInterval | `Number`: When other resolver is already fetching requested data, then how frequent (in milliseconds) the current resolver should check if the first resolver already finished execution. Default is `1000` milliseconds. |
 
 <!-- UNDERSTANDING CACHEKEY ARGUMENT -->
 ## Understanding cacheKey Argument
@@ -111,7 +113,37 @@ directive @cache(ttl: Int, cacheKey: [String!], pollingTimeout: Int, pingInterva
  - `args.<argument-name>`
  - `vars.<variable-name>`
 
-It is not a trivial task to determine what particular cache key contains the cached field's value. However, we can assume that the uniqueness of data that is fetched can be defined by some field's value, arguments, query variable(s), or any combination of them.
+The cache is defined by key/value pair. Where "key" is some unique identify for the "value" that is stored in cache. That is why it is your responsibility to define how the uniqueness of cached data is determined. This way, if next time somebody is requesting the same data, the system will know which "key" to use to check if cache is already built for it or not.
+
+For example, let's take a simple "customer" object that contains the following data.
+
+```json
+{
+  "fullname": "John Smith",
+  "dob": "1980-01-01",
+  "ssn": "809-01-0921",
+  "creditReport": {
+    //...
+  }
+}
+```
+
+The initial information about customer, like fullname or date of birth, is coming from one database. However, the credit report, requires to send an external API call to consumer reporting agency like Equifax or Experian.
+
+So, when we request information about John, we need to make sure that `creditReport` comes from our internal cache first and if no cache yet built, then pull it from the external API. However, we also have to make sure that we do not fetch wrong cache, so the unique cache key has to be very carefully defined.
+
+In our case, the GraphQL schema for the "consumer" type can be defined as following:
+
+```graphql
+type Consumer {
+  fullname: String!
+  dob: String!
+  ssn: String!
+  creditReport: CreditReport @cache(ttl: 2592000, cacheKey: "parent.dob,parent.ssn")
+}
+```
+
+The credit report will be cached for each unique combination of `dob` and `ssn`. Below, I'm explaining it a bit more detail about Apollo GraphQL resolver and how its arguments contribute for the cache key computation.
 
 Each resolver can optionally accept [four positional arguments](https://www.apollographql.com/docs/apollo-server/data/resolvers/#resolver-arguments) `(parent, args, context, info)` that contain enough information for us to define a cache key.
 
@@ -150,6 +182,15 @@ type Book {
 The `parent` argument that is passed to the resolver, already contains the `Library` object type with populated `id` property.
 
 Similar way, we can declare how to define a unique cache key based on passing query [arguments](https://graphql.org/learn/queries/#fields) or [variables](https://graphql.org/learn/queries/#fields).
+
+<!-- CACHE TYPES -->
+## Cache types
+
+Currently this package supports two different cache type behaviors. The `SHARED` cache type defines the behavior where the first request to fetch some specific data, sets the indicator that "fetching is in progress", so other parallel requests to fetch exactly the same data will wait until the first resolver is done.
+
+The `SCOPED` cache type will not bother to communicate to other parallel requests about already fetching data. So, if no cache is defined, each resolver will try to fetch the data independently and cache it.
+
+The best way to determine which type of cache to use is to answer the question "Does it takes a lot of time and resources to resolve the field?". If the answer is yes, then stick with `SHARED` type (which is the default). Otherwise, use `SCOPED`.
 
 
 <!-- SAMPLE PROJECT -->
