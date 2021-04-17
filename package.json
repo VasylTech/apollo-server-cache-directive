@@ -1,6 +1,6 @@
 {
   "name": "apollo-server-cache-directive",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Apollo server @cache directive",
   "repository": "github:VasylTech/apollo-server-cache-directive",
   "main": "dist/index.js",
